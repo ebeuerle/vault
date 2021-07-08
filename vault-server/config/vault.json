@@ -1,0 +1,12 @@
+{
+  "listener": {
+    "tcp": {
+      "address": "0.0.0.0:8200",
+      "tls_cert_file": "/vault/ca/cert/localhost.crt",
+      "tls_key_file": "/vault/ca/private/localhost.key",
+      "tls_require_and_verify_client_cert": "false"
+    }
+  },
+  "default_lease_ttl": "168h",
+  "max_lease_ttl": "720h"
+}

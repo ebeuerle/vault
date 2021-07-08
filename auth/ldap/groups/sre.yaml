@@ -1,0 +1,6 @@
+---
+dn: cn=sre,ou=groups,dc=example,dc=net
+policies:
+  - vault-kubernetes-secrets
+  - vault-not-so-secret-secrets
+  - vault-puppet-secrets

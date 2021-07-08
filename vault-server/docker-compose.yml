@@ -1,0 +1,12 @@
+version: '2'
+
+services:
+  vault-server:
+    image: vault:0.9.6
+    ports:
+      - "127.0.0.1:8200:8200/tcp"
+    volumes:
+      - "./ca:/vault/ca:ro"
+      - "./config:/vault/config:ro"
+      - "./support:/vault/support:ro"
+    entrypoint: /vault/support/run.sh

@@ -1,0 +1,4 @@
+---
+dn: cn=security,ou=groups,dc=example,dc=net
+policies:
+  - vault-full-administrative-access

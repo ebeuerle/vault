@@ -1,0 +1,4 @@
+---
+dn: cn=new-hires,ou=groups,dc=example,dc=net
+policies:
+  - vault-new-hire-secrets

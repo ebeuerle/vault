@@ -1,0 +1,10 @@
+{
+  "path": {
+    "secret/_known": {
+      "capabilities": [
+        "read",
+        "list"
+      ]
+    }
+  }
+}

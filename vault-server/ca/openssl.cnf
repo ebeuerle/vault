@@ -1,0 +1,53 @@
+#
+# OpenSSL example configuration file.
+# This is mostly being used for generation of certificate requests.
+#
+
+# This definition stops the following lines choking if HOME isn't
+# defined.
+HOME   = .
+RANDFILE  = $ENV::HOME/.rnd
+
+####################################################################
+[ ca ]
+default_ca = CA_default  # The default ca section
+
+####################################################################
+[ CA_default ]
+
+dir = .
+crl_dir = $dir/crl
+database = $dir/index.txt
+new_certs_dir = $dir/cert
+certificate = $dir/root-ca.crt
+serial = $dir/serial
+crlnumber = $dir/crlnumber
+crl = $dir/crl.pem
+private_key = $dir/root-ca.key
+RANDFILE = $dir/private/.rand
+name_opt = ca_default
+cert_opt = ca_default
+default_days = 3650
+default_crl_days= 30
+default_md = sha256
+preserve = no
+policy = policy_anything
+
+[ policy_anything ]
+countryName = optional
+stateOrProvinceName = optional
+localityName = optional
+organizationName = optional
+organizationalUnitName = optional
+commonName = optional
+emailAddress = optional
+
+[ server_cert ]
+# Extensions for server certificates (`man x509v3_config`).
+basicConstraints = CA:FALSE
+nsCertType = server
+nsComment = "OpenSSL Generated Server Certificate"
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid,issuer:always
+keyUsage = critical, digitalSignature, keyEncipherment
+extendedKeyUsage = serverAuth

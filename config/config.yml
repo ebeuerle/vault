@@ -1,0 +1,5 @@
+deploy:
+  protocol: "https" # options: "http" or "https"
+  url: "localhost" # FQDN
+  port: "8200" # default port number
+  ca_path: "vault-server/ca/root-ca.crt" #path to ca cert to validate TLS connection
