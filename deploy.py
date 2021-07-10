@@ -1,7 +1,6 @@
 import os
 import logging
 import requests
-import hvac
 import yaml
 import argparse
 import lib
@@ -26,24 +25,32 @@ class DeployPolicyVault():
                 file_path = f"{path}/{file}"
                 with open (file_path,'r') as f:
                     src = yaml.load(f)
-                    if src['dn'] in grp_pols:
-                        new_src[src['dn']] = src['policies']
-                    else:
-                        print("Adding:   {}{}".format(paths,src['dn']))
-                        self.add_group(src['dn'],src['policies'],flag)
+                    new_src[src['dn']] = {'policies':src['policies'], 'filepath': paths + src['dn']}
+        #print("Dictionary new_src: {}".format(new_src))
 
+        ###Add group(s)###
+        for key in new_src.keys():
+            if not key in grp_pols:
+                print("Adding: {}".format(new_src[key]['filepath']))
+                self.add_group(key,new_src,flag)
+
+        #determine which groups are unchanged in vault or need to be modified
         for k, v in new_src.items():
             for m, n in grp_pols.items():
-                if m not in new_src:
-                    self.del_group(paths,m,flag)
-                if v==n:
-                    print("Unchanged: {}{}".format(paths,k))
-                    break
-                else:
-                    self.mod_group(paths,k,v,flag)
-        #print(new_src)
-        #print(grp_pols)
+                if k == m:
+                    if v['policies']==n:
+                        print("Unchanged: {}{}".format(paths,k))
+                        break
+                    else:
+                        print("K: {}, V: {}, N: {}".format(k,v['policies'],n))
+                        #self.mod_group(k,new_src,grp_pols,flag)
+                        break
 
+        ###Delete group(s)###
+        for key in grp_pols.keys():
+            if not key in new_src:
+                self.del_group(paths,key,flag)
+        
     def get_groups_from_vault(self):
         url = self.base_url + '/v1/auth/ldap/groups?list=true'
         req = requests.get(url,headers=self.headers,verify=self.config.ca_path)
@@ -60,37 +67,43 @@ class DeployPolicyVault():
         
         return policies
 
-    def add_group(self,grp_name,pol,flag):
+    def add_group(self,key,new_src,flag):
         if flag == 'no-op':
-            print("  + {}".format(*pol))
+            print(" + {}".format(*new_src[key]['policies']))
             return None
-        url = self.base_url + '/v1/auth/ldap/groups/' + grp_name
-        payload = { 'policies': pol }
-        req = requests.post(url,headers=self.headers,verify=self.config.ca_path, payload=payload)
-        if req.status_code == '200':
+        print(" + {}".format(*new_src[key]['policies']))
+        url = self.base_url + '/v1/auth/ldap/groups/' + key 
+        payload = { 'policies': new_src[key]['policies'][0] }
+        #print("Url: {}, Payload: {}".format(url,payload))
+        req = requests.post(url,headers=self.headers,verify=self.config.ca_path, json=payload)
+
+        if req.status_code == 200 or req.status_code == 204:
             pass
         else:
             print("Something went wrong")
 
-    def mod_group(self,paths,grp_name,pol,flag):
+    def mod_group(self,key,new_src,grp_pols,flag):
         if flag == 'no-op':
-            print("Modifying: {}{}".format(paths,grp_name))
+            print("Modifying: {}".format(new_src[key]['filepath']))
             return None
-        url = self.base_url + '/v1/auth/ldap/groups/' + grp_name
-        payload = { 'policies': pol }
-        req = requests.post(url,headers=self.headers,verify=self.config.ca_path, payload=payload)
-        if req.status_code == '200':
-            pass
-        else:
-            print("Something went wrong")
+        #url = self.base_url + '/v1/auth/ldap/groups/' + grp_name
+        #payload = { 'policies': pol }
+        #req = requests.post(url,headers=self.headers,verify=self.config.ca_path, payload=payload)
+        
+        #if req.status_code == 200 or req.status_code == 204:
+        #    pass
+        #else:
+        #    print("Something went wrong")
 
-    def del_group(self,paths,grp_name,flag):
+    def del_group(self,paths,key,flag):
         if flag == 'no-op':
-            print("Deleting:  {}{}".format(paths,grp_name))
+            print("Deleting:  {}{}".format(paths,key))
             return None
-        url = self.base_url + '/v1/auth/ldap/groups/' + grp_name
+        print("Deleting:  {}{}".format(paths,key))
+        url = self.base_url + '/v1/auth/ldap/groups/' + key 
         req = requests.delete(url,headers=self.headers,verify=self.config.ca_path)
-        if req.status_code == '200':
+
+        if req.status_code == 200 or req.status_code == 204:
             pass
         else:
             print("Something went wrong")
@@ -105,9 +118,13 @@ class DeployPolicyVault():
             flag = "run"
         grp_pols = {}
         vault_groups = self.get_groups_from_vault()
+        #print("Vault groups: {}\n".format(vault_groups))
         for i in vault_groups:
             policies=self.get_policies(i)
+            #print("Policy: {} for Vault group: {}".format(policies,i))
             grp_pols[i] = policies
+        
+        #print("\nGroups and their policies: {}\n".format(grp_pols))
         self.sync_files_to_vault(grp_pols,flag)
 
 def main():
