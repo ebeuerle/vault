@@ -42,8 +42,8 @@ class DeployPolicyVault():
                         print("Unchanged: {}{}".format(paths,k))
                         break
                     else:
-                        print("K: {}, V: {}, N: {}".format(k,v['policies'],n))
-                        #self.mod_group(k,new_src,grp_pols,flag)
+                        print("Modifying: {}".format(new_src[key]['filepath']))
+                        self.mod_group(k,v['policies'],n,flag)
                         break
 
         ###Delete group(s)###
@@ -82,18 +82,34 @@ class DeployPolicyVault():
         else:
             print("Something went wrong")
 
-    def mod_group(self,key,new_src,grp_pols,flag):
+    def mod_group(self,key,new_src_pols,grp_pols,flag):
         if flag == 'no-op':
-            print("Modifying: {}".format(new_src[key]['filepath']))
+            for ele in new_src_pols:
+                if not ele in grp_pols:
+                    print(" + {}".format(ele))
+            for ele in grp_pols:
+                if not ele in new_src_pols:
+                    print(" - {}".format(ele))
             return None
-        #url = self.base_url + '/v1/auth/ldap/groups/' + grp_name
-        #payload = { 'policies': pol }
-        #req = requests.post(url,headers=self.headers,verify=self.config.ca_path, payload=payload)
+        #print out changes 
+        for ele in new_src_pols:
+                if not ele in grp_pols:
+                    print(" + {}".format(ele))
+        for ele in grp_pols:
+                if not ele in new_src_pols:
+                    print(" - {}".format(ele))
+        url = self.base_url + '/v1/auth/ldap/groups/' + key
+        #use map + join to get comma delimited string 
+        delim = ","
+        temp = list(map(str, new_src_pols))
+        pol = delim.join(temp)
+        payload = { 'policies': str(pol) }
+        req = requests.post(url,headers=self.headers,verify=self.config.ca_path, json=payload)
         
-        #if req.status_code == 200 or req.status_code == 204:
-        #    pass
-        #else:
-        #    print("Something went wrong")
+        if req.status_code == 200 or req.status_code == 204:
+            pass
+        else:
+            print("Something went wrong")
 
     def del_group(self,paths,key,flag):
         if flag == 'no-op':
